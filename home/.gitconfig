@@ -1,0 +1,50 @@
+# vim: sw=4 et
+
+#[user]
+#    name = CompileNix
+#    email = compilenix@gmail.com
+#    signingkey = C94DD853DD6493CCC47C8C853C713073CAC92AE0
+[core]
+    fscache = true
+    preloadindex = true
+#    fileMode = false
+[alias]
+    s = status
+    c = config
+    ch = checkout
+    cl = config -l
+    ce = config -e
+    cr = clone --recursive
+    f = fetch
+    p = pull
+    a = add
+    aa = add -A
+    b = branch
+    d = diff --word-diff=color
+    dr = diff --word-diff=color origin/master
+    l = log --oneline --graph --decorate --all
+    # l = log --oneline --graph --decorate --all --date=human
+    la = log --graph --decorate --all --show-signature
+    tags = tag -l
+    branches = branch -a
+    remotes = remote -v
+    contributors = shortlog --summary --numbered
+[color]
+    ui = auto
+#[commit]
+    # https://help.github.com/articles/signing-commits-using-gpg/
+    #gpgsign = true
+[gpg]
+    program = gpg2
+[diff]
+    renames = copies
+[help]
+    # Automatically correct and execute mistyped commands
+    autocorrect = 30
+[push]
+    default = matching
+    followTags = true
+[oh-my-zsh]
+    hide-status = 1
+[include]
+    path = ~/.gitconfig_include
