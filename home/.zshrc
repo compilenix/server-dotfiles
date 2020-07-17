@@ -43,11 +43,11 @@ if [ -f $(which tmux 2>/dev/null) ]; then
     if [ ! -f "$HOME/.tmux.conf_configured" ]; then
         if [[ $(tmux -V) == *"1."* ]]; then
             unlink "$HOME/.tmux.conf" 2>/dev/null
-            ln -s "$HOME/.homesick/repos/dotfiles/home/.tmux.conf_v1" "$HOME/.tmux.conf"
+            ln -s "$HOME/.homesick/repos/server-dotfiles/home/.tmux.conf_v1" "$HOME/.tmux.conf"
         fi
         if [[ $(tmux -V) == *"2."* ]]; then
             unlink "$HOME/.tmux.conf" 2>/dev/null
-            ln -s "$HOME/.homesick/repos/dotfiles/home/.tmux.conf_v2" "$HOME/.tmux.conf"
+            ln -s "$HOME/.homesick/repos/server-dotfiles/home/.tmux.conf_v2" "$HOME/.tmux.conf"
         fi
         touch "$HOME/.tmux.conf_configured"
     fi
@@ -214,16 +214,10 @@ function get-dataurl {
 alias set-zsh-highlighting-full='ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern line)'
 alias set-zsh-highlighting-default='ZSH_HIGHLIGHT_HIGHLIGHTERS=(main)'
 alias set-zsh-highlighting-off='ZSH_HIGHLIGHT_HIGHLIGHTERS=()'
-alias set-terminal-powersave-off='setterm -blank 0 -powersave off'
-alias set-terminal-powersave-on='setterm -blank 60 -powersave on'
 alias set-megaraid-alarm-enabled='sudo megacli -AdpSetProp AlarmEnbl'
 alias set-megaraid-alarm-disabled='sudo megacli -AdpSetProp AlarmDsbl'
 alias set-megaraid-alarm-silent='sudo megacli -AdpSetProp AlarmSilence'
 alias set-keyboard-mode-raw='sudo kbd_mode -s'
-alias set-display-off-x11='sleep 1; xset dpms force standby'
-alias set-display-on-x11='xset dpms force on'
-alias set-display-off-wayland="swayidle timeout 1 'swaymsg \"output * dpms off\"' resume 'swaymsg \"output * dpms on\"; pkill -nx swayidle'"
-alias set-display-on-wayland='swaymsg "output * dpms on"'
 alias update-gentoo='echo "do a \"emerge --sync\"?"; ask_yn_y_callback() { sudo emerge --sync; }; ask_yn_n_callback() { echo ""; }; ask_yn; sudo emerge -avDuN world'
 alias update-archlinux-pacman='sudo pacman -Syu'
 alias update-archlinux-yaourt='sudo yaourt -Syu'
@@ -239,16 +233,16 @@ function fix-antigen_and_homesick_vim {
     if [[ -d ~/.homesick/repos/dotfiles/home/.antigen ]]
     then
         pushd ~/.homesick/repos
-        rm -rf dotfiles
-        git clone --recursive https://github.com/compilenix/dotfiles.git
+        rm -rf server-dotfiles
+        git clone --recursive https://git.compilenix.org/CompileNix/server-dotfiles.git
         popd >/dev/null
         pushd ~
         rm -rf .antigen
         rm -rf .vim/bundle/vundle
-        ln -sfv .homesick/repos/dotfiles/antigen .antigen
+        ln -sfv .homesick/repos/server-dotfiles/antigen .antigen
         popd >/dev/null
         pushd ~/.vim/bundle
-        ln -sfv ../../.homesick/repos/dotfiles/vim/vundle vundle
+        ln -sfv ../../.homesick/repos/server-dotfiles/vim/vundle vundle
         popd >/dev/null
     fi
     antigen-cleanup
@@ -264,7 +258,7 @@ function fix-antigen_and_homesick_vim {
 
     exec zsh
 }
-alias update-zshrc='pushd ~/.homesick/repos/dotfiles; git status; popd >/dev/null; echo "This will reset all changes you may made to files which are symlinks at your home directory, to check this your own: \"# cd ~/.homesick/repos/dotfiles && git status\"\nDo you want preced anyway?"; function ask_yn_y_callback { fix-antigen_and_homesick_vim; }; function ask_yn_n_callback { echo -n ""; }; ask_yn'
+alias update-zshrc='pushd ~/.homesick/repos/server-dotfiles; git status; popd >/dev/null; echo "This will reset all changes you may made to files which are symlinks at your home directory, to check this your own: \"# cd ~/.homesick/repos/server-dotfiles && git status\"\nDo you want preced anyway?"; function ask_yn_y_callback { fix-antigen_and_homesick_vim; }; function ask_yn_n_callback { echo -n ""; }; ask_yn'
 alias update-code-insiders-rpm='wget "https://go.microsoft.com/fwlink/?LinkID=760866" -O /tmp/code-insiders.rpm && sudo yum install -y /tmp/code-insiders.rpm && rm /tmp/code-insiders.rpm'
 alias test-mail-sendmail='echo "Subject: test" | sendmail -v '
 alias test-mail-mutt='mutt -s "test" '
@@ -326,6 +320,7 @@ if [[ $distro == "Arch" ]]; then
 fi
 
 function install-podman-fedora {
+    sudo dnf remove docker
     sudo dnf install podman
     sudo dnf update container-selinux
     mkdir -pv ~/.zsh/completion
@@ -335,7 +330,7 @@ function install-podman-fedora {
     exec zsh
 }
 
-export PATH=".cargo/bin:./node_modules/.bin:$HOME/bin:$HOME/.local/bin:$HOME/.yarn/bin:$HOME/.homesick/repos/dotfiles/home/bin_dotfiles:/usr/lib/node_modules/.bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
+export PATH=".cargo/bin:./node_modules/.bin:$HOME/bin:$HOME/.local/bin:$HOME/.yarn/bin:$HOME/.homesick/repos/server-dotfiles/home/bin_dotfiles:/usr/lib/node_modules/.bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
 export EDITOR=vim
 export LANG="en_US.UTF-8"
 export HISTSIZE=10000
@@ -573,7 +568,7 @@ export FT2_SUBPIXEL_HINTING=1
 if [ -f "$HOME/.zshrc_include" ]; then
     source "$HOME/.zshrc_include"
 else
-    echo -e "#export SSH_AUTH_SOCK=\$XDG_RUNTIME_DIR/keeagent.sock\n#export EDITOR=nano" >"$HOME/.zshrc_include"
+    echo -e "#export EDITOR=nano" >"$HOME/.zshrc_include"
 fi
 
 antigen apply
