@@ -230,7 +230,7 @@ function git-reset { for i in $*; do echo -e "\033[0;36m$i\033[0;0m"; pushd "$i"
 function fix-antigen_and_homesick_vim {
     sudo rm /usr/local/bin/tmux-mem-cpu-load
     # Migrate from 1.x antigen to 2.x antigen
-    if [[ -d ~/.homesick/repos/dotfiles/home/.antigen ]]
+    if [[ -d ~/.homesick/repos/server-dotfiles/home/.antigen ]]
     then
         pushd ~/.homesick/repos
         rm -rf server-dotfiles

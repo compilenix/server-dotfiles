@@ -69,21 +69,21 @@ Copy and paste into terminal.
 __Keep always an old terminal open, in case of failures!__
 
 ```sh
-cd ~/.homesick/repos/dotfiles
+cd ~/.homesick/repos/server-dotfiles
 git status
 popd >/dev/null
-echo "This will reset all changes you may made to files which are symlinks at your home directory, to check this your own: \"# cd ~/.homesick/repos/dotfiles && git status\"\nDo you want preced anyway?"
+echo "This will reset all changes you may made to files which are symlinks at your home directory, to check this your own: \"# cd ~/.homesick/repos/server-dotfiles && git status\"\nDo you want preced anyway?"
 function ask_yn_y_callback {
     sudo rm /usr/local/bin/tmux-mem-cpu-load
     pushd ~
     rm -rf .vim/bundle
     pushd ~/.homesick/repos
-    rm -rf dotfiles
+    rm -rf server-dotfiles
     git clone --recursive https://git.compilenix.org/CompileNix/server-dotfiles.git
     popd >/dev/null
     pushd ~
     rm -rf .antigen
-    ln -sfv .homesick/repos/dotfiles/antigen .antigen
+    ln -sfv .homesick/repos/server-dotfiles/antigen .antigen
     popd >/dev/null
     antigen-cleanup
     git-reset ~/.homesick/repos/*
