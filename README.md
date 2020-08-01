@@ -1,10 +1,10 @@
-# dotfiles
+# Description
 
 My server configuration files. feel free to steal whatever you like.
 
 See also my [personal dotfiles](https://git.compilenix.org/CompileNix/dotfiles) repo.
 
-## requirements
+## Requirements
 - python 3.7+
 - git
 - zsh
@@ -12,12 +12,12 @@ See also my [personal dotfiles](https://git.compilenix.org/CompileNix/dotfiles) 
 - sudo
 - tee
 
-### Debain
+### Debian / Ubuntu
 ```sh
 sudo apt install python3 python3-pip python git zsh vim vim-airline tmux curl wget net-tools htop ncdu iftop iotop mutt lsb-release rsync brotli gzip zip unzip bind9utils postfix
 ```
 
-#### More packages
+#### More Packages
 ```sh
 sudo apt install build-essential cmake
 ```
@@ -26,7 +26,7 @@ sudo apt install build-essential cmake
 ```sh
 sudo dnf install python3 python git zsh vim vim-airline tmux curl wget ncdu redhat-lsb-core python3-pip htop iftop iotop mutt bind-utils rsync iptables postfix
 ```
-#### More packages
+#### More Packages
 ```sh
 sudo dnf install make gcc-c++ gcc cmake sqlite
 ```
@@ -51,12 +51,12 @@ chsh -s /usr/local/bin/zsh
 exec zsh
 ```
 
-#### More packages
+#### More Packages
 ```sh
 sudo yum install cmake
 ```
 
-## install
+## Install
 __Keep always an old terminal open, in case of failures!__
 
 ```sh
