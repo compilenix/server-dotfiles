@@ -337,13 +337,15 @@ function install-podman-fedora {
 }
 
 export PATH=".cargo/bin:./node_modules/.bin:$HOME/bin:$HOME/.local/bin:$HOME/.yarn/bin:$HOME/.homesick/repos/server-dotfiles/home/bin_dotfiles:/usr/lib/node_modules/.bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
-export EDITOR=vim
+export EDITOR=nvim
 export LANG="en_US.UTF-8"
 export HISTSIZE=10000
 export HISTFILE="$HOME/.history"
 export SAVEHIST=$HISTSIZE
 # Don’t clear the screen after quitting a manual page.
 #export MANPAGER='less -X';
+unalias vim 2>/dev/null
+alias vim='nvim'
 
 # if it's an ssh session export GPG_TTY
 if [[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]]; then
