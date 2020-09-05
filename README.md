@@ -24,7 +24,7 @@ sudo apt install build-essential cmake
 
 ## Fedora
 ```sh
-sudo dnf install python3 python git zsh vim vim-airline tmux curl wget ncdu redhat-lsb-core python3-pip htop iftop iotop mutt bind-utils rsync iptables langpacks-de neovim postfix
+sudo dnf install python3 python git zsh vim vim-airline tmux curl wget ncdu redhat-lsb-core python3-pip htop iftop iotop mutt bind-utils rsync iptables langpacks-de neovim NetworkManager-tui postfix
 ```
 ### More Packages
 ```sh
@@ -33,7 +33,7 @@ sudo dnf install make gcc-c++ gcc cmake sqlite
 
 ## CentOS 7
 ```sh
-sudo yum install python3 python git zsh vim vim-airline tmux curl wget redhat-lsb-core make gcc-c++ gcc ncurses-devel python3-pip ncdu htop iftop iotop mutt bind-utils rsync iptables langpacks-de neovim postfix
+sudo yum install python3 python git zsh vim vim-airline tmux curl wget redhat-lsb-core make gcc-c++ gcc ncurses-devel python3-pip ncdu htop iftop iotop mutt bind-utils rsync iptables langpacks-de neovim NetworkManager-tui postfix
 # because centos ships an ancient version of ZSH we have to build a recent version by our self
 # see https://sourceforge.net/projects/zsh/files/zsh/
 cd /opt
