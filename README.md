@@ -4,63 +4,33 @@ My server configuration files. feel free to steal whatever you like.
 
 See also my [personal dotfiles](https://git.compilenix.org/CompileNix/dotfiles) repo.
 
-# Requirements
-- python 3.7+
-- git
-- zsh
-- vim
-- sudo
-- tee
-
-## Debian / Ubuntu
-```sh
-sudo apt install python3 python3-pip python git zsh vim vim-airline tmux curl wget net-tools htop ncdu iftop iotop mutt lsb-release rsync brotli gzip zip unzip bind9utils language-pack-de neovim postfix
-```
-
-### More Packages
-```sh
-sudo apt install build-essential cmake
-```
-
-## Fedora
-```sh
-sudo dnf install python3 python git zsh vim vim-airline tmux curl wget ncdu redhat-lsb-core python3-pip htop iftop iotop mutt bind-utils rsync iptables langpacks-de neovim NetworkManager-tui postfix
-```
-### More Packages
-```sh
-sudo dnf install make gcc-c++ gcc cmake sqlite
-```
-
-## CentOS 7
-```sh
-sudo yum install python3 python git zsh vim vim-airline tmux curl wget redhat-lsb-core make gcc-c++ gcc ncurses-devel python3-pip ncdu htop iftop iotop mutt bind-utils rsync iptables langpacks-de neovim NetworkManager-tui postfix
-# because centos ships an ancient version of ZSH we have to build a recent version by our self
-# see https://sourceforge.net/projects/zsh/files/zsh/
-cd /opt
-wget https://sourceforge.net/projects/zsh/files/zsh/5.8/zsh-5.8.tar.xz/download
-tar -xJf download
-rm -f download
-cd zsh-*
-./configure
-make -j$(nproc) && sudo make install
-cd ..
-rm -rf zsh-*
-cd ~
-echo "/usr/local/bin/zsh" >>/etc/shells
-chsh -s /usr/local/bin/zsh
-exec zsh
-```
-
-### More Packages
-```sh
-sudo yum install cmake
-```
-
 # Install
 __Keep always an old terminal open, in case of failures!__
 
 ```sh
 curl https://git.compilenix.org/CompileNix/server-dotfiles/-/raw/master/install.sh | bash
+```
+
+
+# Requirements
+- python 3.7+
+- git
+- zsh
+- neovim or vim
+- sudo
+- tee
+
+## Debian / Ubuntu
+```sh
+# How to get rid of purple background color in newt apps? -> https://askubuntu.com/q/750237
+sudo ln -sf /etc/newt/palette.original /etc/alternatives/newt-palette
+
+sudo apt install python3 python3-pip python git zsh vim vim-airline neovim tmux curl wget net-tools acl htop ncdu iftop iotop mutt lsb-release rsync brotli gzip zip unzip bind9utils language-pack-de build-essential cmake
+```
+
+## Fedora
+```sh
+sudo dnf install python3 python git zsh vim vim-airline neovim tmux curl wget ncdu redhat-lsb-core python3-pip acl htop iftop iotop mutt bind-utils rsync iptables langpacks-de make gcc-c++ gcc cmake sqlite
 ```
 
 # Update
@@ -101,3 +71,11 @@ function ask_yn_n_callback {
 }
 ask_yn
 ```
+
+# Windows
+## Tools / Software
+- [7-ZIP](https://www.7-zip.org/): archive file management
+- [Process Explorer](https://docs.microsoft.com/en-us/sysinternals/downloads/process-explorer): more advanced Task Manager
+- [TeraCopy](https://www.codesector.com/teracopy): better file copy & move
+- [Visual Studio Code](https://code.visualstudio.com/download): text editor
+- [NetLimiter](https://www.netlimiter.com/): alternative firewall (not based on Windows Firewall)
