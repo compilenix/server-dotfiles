@@ -1,3 +1,13 @@
+# vim: sw=4 et
+
+if [ ! -f "~/.zshrc.env" ]; then
+cat << EOF | tee $HOME/.zshrc.env >/dev/null
+ZSH_LIGHT=false
+ZSH_MINIMAL=false
+EOF
+fi
+source ~/.zshrc.env
+
 unameOut="$(uname -s)"
 case "${unameOut}" in
     Linux*)     operatingSystem=Linux;;
@@ -7,6 +17,8 @@ case "${unameOut}" in
     *)          operatingSystem="UNKNOWN:${unameOut}"
 esac
 unset unameOut
+
+DOTFILES_REPO_NAME=server-dotfiles
 
 if [[ $operatingSystem == "Linux" ]]; then
     n=$(nice)
@@ -34,38 +46,17 @@ then
     return
 fi
 
-# TODO: do the following for htop, too.
 unalias tmux 2>/dev/null
 if [ -f $(which tmux 2>/dev/null) ]; then
     if [ ! -f "$HOME/.tmux.conf_configured" ]; then
         unlink "$HOME/.tmux.conf" 2>/dev/null
-        ln -s "$HOME/.homesick/repos/server-dotfiles/home/.tmux.conf_v2" "$HOME/.tmux.conf"
+        ln -s "$HOME/.homesick/repos/${DOTFILES_REPO_NAME}/home/.tmux.conf_v2" "$HOME/.tmux.conf"
         if [[ $(tmux -V) == *"1."* ]]; then
             unlink "$HOME/.tmux.conf" 2>/dev/null
-            ln -s "$HOME/.homesick/repos/server-dotfiles/home/.tmux.conf_v1" "$HOME/.tmux.conf"
+            ln -s "$HOME/.homesick/repos/${DOTFILES_REPO_NAME}/home/.tmux.conf_v1" "$HOME/.tmux.conf"
         fi
         touch "$HOME/.tmux.conf_configured"
     fi
-fi
-
-unalias sudo 2>/dev/null
-unalias make 2>/dev/null
-unalias cmake 2>/dev/null
-unalias gcc 2>/dev/null
-unalias g++ 2>/dev/null
-unalias c++ 2>/dev/null
-condition_for_tmux_mem_cpu_load=1
-if [[ \
-    $EUID -eq 0 && \
-    -f $(which sudo 2>/dev/null) && \
-    -f $(which make 2>/dev/null) && \
-    -f $(which cmake 2>/dev/null) && \
-    -f $(which gcc 2>/dev/null) && \
-    -f $(which g++ 2>/dev/null) && \
-    -f $(which c++ 2>/dev/null) \
-    ]]; then
-
-    condition_for_tmux_mem_cpu_load=0
 fi
 
 distro=''
@@ -95,6 +86,8 @@ if [[ $operatingSystem == "Linux" ]]; then
     unset is_done
     unset distro_result
 fi
+alias get-distro="lsb_release -a"
+alias get-distro-name="echo $distro"
 
 # aliases
 if [[ $operatingSystem == "Mac" ]]; then
@@ -106,6 +99,18 @@ else
     alias iotop='iotop -d 1 -P -o'
 fi
 
+function ask_yn {
+    select yn in "Yes" "No"; do
+        case $yn in
+            Yes)
+                ask_yn_y_callback
+                break;;
+            No)
+                ask_yn_n_callback
+                break;;
+        esac
+    done
+}
 alias sudo='sudo SSH_AUTH_SOCK=$SSH_AUTH_SOCK'
 alias sudosu='sudo su -'
 alias pls='sudo'
@@ -118,24 +123,23 @@ alias l='la'
 alias grep='grep --color'
 alias htop='htop -d 10'
 alias rsync="rsync --progress --numeric-ids --human-readable --copy-links --hard-links"
-alias ask_yn='select yn in "Yes" "No"; do case $yn in Yes) ask_yn_y_callback; break;; No) ask_yn_n_callback; break;; esac; done'
 alias brexit='echo "disable all network interfaces, delete 50% of all files and then reboot the dam thing!"; ask_yn_y_callback() { echo "See ya and peace out!"; exit; }; ask_yn_n_callback() { echo -n ""; }; ask_yn'
 alias urlencode='python3 -c "import sys, urllib.parse; print(urllib.parse.quote_plus(sys.stdin.read()));"'
 alias urldecode='python3 -c "import sys, urllib.parse; print(urllib.parse.unquote_plus(sys.stdin.read()));"'
 alias ceph-osd-heap-release='ceph tell "osd.*" heap release' # release unused memory by the ceph osd daemon(s).
-alias clean-swap='sudo swapoff -a; sudo swapon -a'
-alias reset-swap='clean-swap'
-alias drop-fscache='sync; sudo echo 3 > /proc/sys/vm/drop_caches'
-alias reset-fscache='drop-fscache'
+alias reset-swap='sudo swapoff -a; sudo swapon -a'
+alias reset-fscache='sync; sudo echo 3 > /proc/sys/vm/drop_caches'
 alias dns-retransfer-zones='rndc retransfer'
 alias dns-reload-zones='rndc reload'
 alias get-ip-local='ip a'
 alias get-ip-internet='curl https://ip.compilenix.org'
 alias get-ip-routes='ip route | column -t'
-alias get-network-listening='sudo netstat -tunpl'
-alias get-network-active-connections='sudo netstat -tun'
-alias get-network-active-connections-by-type="sudo netstat -tun | awk '{print \$6}' | sort | uniq -c | sort -n | tail -n +2"
-alias get-network-active-connections-by-type-program="sudo netstat -tunp | awk '{print \$6,\$7}' | sort | uniq -c | sort -n | tail -n +2"
+alias get-network-listening-netstat='sudo netstat -tunpl'
+alias get-network-listening='sudo ss --oneline --numeric --listening --processes --tcp --udp'
+alias get-network-active-connections-netstat='sudo netstat -tun'
+alias get-network-active-connections='ss --oneline --numeric --processes --tcp --udp -o state synchronized'
+alias get-network-active-connections-by-type-netstat="sudo netstat -tun | awk '{print \$6}' | sort | uniq -c | sort -n | tail -n +2"
+alias get-network-active-connections-by-type="sudo ss --summary"
 alias get-iptables-v4='sudo iptables -L -v'
 alias get-iptables-v4-nat='sudo iptables -t nat -L -v'
 alias get-iptables-v6='sudo ip6tables -L -v'
@@ -178,31 +182,24 @@ function set-dns-additional-enable {
 function set-dns-additional-disable {
     export dnsAdditional=''
 }
-
 set-dns-stats-enable
 set-dns-additional-enable
 alias get-dns="dig +noall \$(echo \$dnsStats) \$(echo \$dnsAdditional) +answer"
 alias get-dns-dnssec="dig +noall \$(echo \$dnsStats) \$(echo \$dnsAdditional) +answer +dnssec"
 alias get-dns-dnssec-verify="dig +noall \$(echo \$dnsStats) \$(echo \$dnsAdditional) +answer +dnssec +sigchase"
-
 alias get-picture-metadata-curl='echo -n "URL: "; read a; curl -sr 0-1024 $a | strings'
 alias get-picture-metadata-file='echo -n "file path: "; read a; dd bs=1 count=1024 if=$a 2>/dev/null | strings'
-alias get-weather='curl wttr.in'
-alias get-weather-in='echo -n "enter location (name or 3-letters airport code): "; read a; curl wttr.in/$a'
-alias get-moon-phase='curl wttr.in/Moon'
 alias get-random-alias='alias | sort --random-sort | head -n 1'
-alias get-random-password-strong='echo -n "length: "; read len; cat /dev/urandom | tr -dc "[:print:]" | head -c $len | awk "{ print $1 }"'  # awk adds a newline
-alias get-random-password-alnum='echo -n "length: "; read len; cat /dev/urandom | tr -dc "[:alnum:]" | head -c $len | awk "{ print $1 }"'
-alias get-random-password-alnum-lower='echo -n "length: "; read len; cat /dev/urandom | tr -dc "[:digit:][:lower:]" | head -c $len | awk "{ print $1 }"'
+alias get-random-password-strong='echo -n "length: "; read len; cat /dev/random | tr -dc "[:print:]" | head -c $len | awk "{ print $1 }"'  # awk adds a newline
+alias get-random-password-alnum='echo -n "length: "; read len; cat /dev/random | tr -dc "[:alnum:]" | head -c $len | awk "{ print $1 }"'
+alias get-random-password-alnum-lower='echo -n "length: "; read len; cat /dev/random | tr -dc "[:digit:][:lower:]" | head -c $len | awk "{ print $1 }"'
 alias get-random-number-range='echo -n "from: "; read from; echo -n "to: "; read to; shuf -i ${from}-${to} -n 1'
 alias get-random-guid='uuidgen'
 alias get-fortune='echo -e "\n$(tput bold)$(tput setaf $(shuf -i 1-5 -n 1))$(fortune)\n$(tput sgr0)"'
 alias get-process-zombie="ps aux | awk '{if (\$8==\"Z\") { print \$2 }}'"
-alias set-clipboard-x11="xclip -i -sel c -f"
-alias set-clipboard-wayland="wl-copy"
-alias get-clipboard-wayland="wl-paste"
 alias get-ssh-pubkey='if [ -f ~/.ssh/id_ed25519.pub ]; then cat ~/.ssh/id_ed25519.pub; elif [ -f ~/.ssh/id_ed25519_pub ]; then content=$(cat ~/.ssh/id_ed25519_pub); fi; echo $content'
 alias get-ssh-prikey='if [ -f ~/.ssh/id_ed25519 ]; then cat ~/.ssh/id_ed25519; elif [ -f ~/.ssh/id_ed25519 ]; then content=$(cat ~/.ssh/id_ed25519_pub); fi; echo $content'
+alias get-ssh-pubkeys-host='(for file in /etc/ssh/*_key.pub; do echo "$file"; ssh-keygen -l -E md5 -f $file; ssh-keygen -l -E sha256 -f "$file"; echo; done; ssh-keygen -r $(hostname -s))'
 function get-debian-package-description { read input; dpkg -l ${input} | grep --color " ${input} " | awk '{$1=$2=$3=$4="";print $0}' | sed 's/^ *//' }
 function get-debian-package-updates { apt --just-print upgrade 2>&1 | perl -ne 'if (/Inst\s([\w,\-,\d,\.,~,:,\+]+)\s\[([\w,\-,\d,\.,~,:,\+]+)\]\s\(([\w,\-,\d,\.,~,:,\+]+)\)? /i) {print "$1 (\e[1;34m$2\e[0m -> \e[1;32m$3\e[0m)\n"}'; }
 # Create a data URL from a file
@@ -230,24 +227,21 @@ alias update-yum='sudo yum update'
 alias update-redhat='sudo dnf update'
 alias update-fedora='update-redhat'
 function git-reset { for i in $*; do echo -e "\033[0;36m$i\033[0;0m"; pushd "$i"; git reset --hard; popd >/dev/null; done; }
-function fix-antigen_and_homesick_vim {
+function update-dotfiles-non-interactive {
     if [[ $EUID -eq 0 ]]; then
         rm /usr/local/bin/tmux-mem-cpu-load
     fi
     # Migrate from 1.x antigen to 2.x antigen
-    if [[ -d ~/.homesick/repos/server-dotfiles/home/.antigen ]]
+    if [[ -d ~/.homesick/repos/${DOTFILES_REPO_NAME}/home/.antigen ]]
     then
         pushd ~/.homesick/repos
-        rm -rf server-dotfiles
-        git clone --recursive https://git.compilenix.org/CompileNix/server-dotfiles.git
+        rm -rf ${DOTFILES_REPO_NAME}
+        git clone --recursive https://git.compilenix.org/CompileNix/${DOTFILES_REPO_NAME}.git
         popd >/dev/null
         pushd ~
         rm -rf .antigen
         rm -rf .vim/bundle/vundle
-        ln -sfv .homesick/repos/server-dotfiles/antigen .antigen
-        popd >/dev/null
-        pushd ~/.vim/bundle
-        ln -sfv ../../.homesick/repos/server-dotfiles/vim/vundle vundle
+        ln -sfv .homesick/repos/${DOTFILES_REPO_NAME}/antigen .antigen
         popd >/dev/null
     fi
     antigen-cleanup
@@ -263,8 +257,20 @@ function fix-antigen_and_homesick_vim {
 
     exec zsh
 }
-alias update-zshrc='pushd ~/.homesick/repos/server-dotfiles; git status; popd >/dev/null; echo "This will reset all changes you may made to files which are symlinks at your home directory, to check this your own: \"# cd ~/.homesick/repos/server-dotfiles && git status\"\nDo you want preced anyway?"; function ask_yn_y_callback { fix-antigen_and_homesick_vim; }; function ask_yn_n_callback { echo -n ""; }; ask_yn'
-alias update-code-insiders-rpm='wget "https://go.microsoft.com/fwlink/?LinkID=760866" -O /tmp/code-insiders.rpm && sudo yum install -y /tmp/code-insiders.rpm && rm /tmp/code-insiders.rpm'
+function update-dotfiles {
+    pushd ~/.homesick/repos/${DOTFILES_REPO_NAME}
+    git status
+    popd >/dev/null
+    echo "This will reset all changes you may made to files which are symlinks at your home directory, to check this your own: \"# cd ~/.homesick/repos/${DOTFILES_REPO_NAME} && git status\""
+    echo "Do you want proceed anyway?"
+    function ask_yn_y_callback {
+        update-dotfiles-non-interactive
+    }
+    function ask_yn_n_callback {
+        echo -n ""
+    }
+    ask_yn
+}
 alias test-mail-sendmail='echo -n "To: "; read mail_to_addr; echo -e "From: ${USER}@$(hostname -f)\nTo: ${mail_to_addr}\nSubject: test subject\n\ntest body" | sendmail -v "${mail_to_addr}"'
 alias test-mail-mutt='mutt -s "test" '
 function apache-configtest { sudo apache2ctl -t }
@@ -280,15 +286,17 @@ function read-logfile {
 }
 alias root='sudo su -l root'
 alias get-processes='ps -aux'
+alias get-processes-systemd='systemd-cgls'
 alias get-memory='free -h -m'
 alias get-disk-space='df -h'
 alias get-disks='lsblk'
+alias get-disks-id='blkid'
 alias get-mounts='mount | column -t'
 alias systemctl-status='systemctl status'
 alias start-stopwatch='echo "press Ctrl+D to stop"; time cat'
 alias install-fnm='curl https://raw.githubusercontent.com/Schniz/fnm/master/.ci/install.sh | bash'
 alias install-node-fnm='install-fnm'
-alias install-nvm='curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.35.3/install.sh | bash'
+alias install-nvm='curl -o- https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash'
 alias add-user='useradd'
 alias remove-user='deluser'
 alias inspect-docker-image='dive'  # https://github.com/wagoodman/dive
@@ -335,14 +343,15 @@ function install-podman-fedora {
     exec zsh
 }
 
-export PATH=".cargo/bin:./node_modules/.bin:$HOME/bin:$HOME/.local/bin:$HOME/.yarn/bin:$HOME/.homesick/repos/server-dotfiles/home/bin_dotfiles:/usr/lib/node_modules/.bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
-export EDITOR=nvim
-export LANG="en_US.UTF-8"
-export HISTSIZE=10000
-export HISTFILE="$HOME/.history"
-export SAVEHIST=$HISTSIZE
-# Don’t clear the screen after quitting a manual page.
-#export MANPAGER='less -X';
+function remove-podman-fedora {
+    sudo dnf remove podman
+    sudo dnf update container-selinux
+    rm -v ~/.zsh/completion/_podman 2>/dev/null
+    unalias docker 2>/dev/null
+    exec zsh
+}
+
+export PATH=".cargo/bin:./node_modules/.bin:$HOME/bin:$HOME/.local/bin:$HOME/.yarn/bin:$HOME/.homesick/repos/${DOTFILES_REPO_NAME}/home/bin_dotfiles:/usr/lib/node_modules/.bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
 unalias vim 2>/dev/null
 alias vim='nvim'
 
@@ -366,7 +375,21 @@ if [ ! -f "$HOME/.tmux.conf_include" ]; then
 fi
 
 if [ ! -f "$HOME/.gitconfig_include" ]; then
-    echo -e "# vim: sw=4 et\n\n[user]\n\tname = CompileNix\n#\temail = compilenix@gmail.org\n#\tsigningkey = 3C713073CAC92AE0\n#[commit]\n\t# https://help.github.com/articles/signing-commits-using-gpg/\n#\tgpgsign = true\n#[credential]\n#\thelper = store\n" > "$HOME/.gitconfig_include"
+cat << EOF | tee $HOME/.gitconfig_include >/dev/null
+# vim: sw=4 et
+
+[user]
+     name = CompileNix
+     email = compilenix@gmail.com
+     signingkey = C94DD853DD6493CCC47C8C853C713073CAC92AE0
+
+# https://help.github.com/articles/signing-commits-using-gpg/
+[commit]
+     gpgsign = true
+
+[credential]
+    helper = store
+EOF
 fi
 
 source "$HOME/.homesick/repos/homeshick/homeshick.sh"
@@ -378,56 +401,84 @@ ZSH_TMUX_FIXTERM=false
 COMPLETION_WAITING_DOTS=true
 DISABLE_MAGIC_FUNCTIONS=true
 
-source $HOME/.antigen/antigen.zsh
-antigen use oh-my-zsh
-antigen theme denysdovhan/spaceship-prompt
+if [[ $ZSH_MINIMAL != "true" ]]; then
+    source $HOME/.antigen/antigen.zsh
+    antigen use oh-my-zsh
+    antigen theme denysdovhan/spaceship-prompt
 
-SPACESHIP_PROMPT_ADD_NEWLINE=false
-SPACESHIP_PROMPT_SEPARATE_LINE=false
-SPACESHIP_TIME_SHOW=true
-SPACESHIP_USER_SHOW=true
-SPACESHIP_HOST_SHOW=true
-SPACESHIP_HOST_SHOW_FULL=false
-SPACESHIP_BATTERY_THRESHOLD=25
-SPACESHIP_EXIT_CODE_SHOW=true
-SPACESHIP_EXIT_CODE_SUFFIX=" (╯°□°）╯︵ ┻━┻ "
+    SPACESHIP_PROMPT_ADD_NEWLINE=false
+    SPACESHIP_PROMPT_SEPARATE_LINE=false
+    SPACESHIP_TIME_SHOW=true
+    SPACESHIP_USER_SHOW=true
+    SPACESHIP_HOST_SHOW=true
+    SPACESHIP_HOST_SHOW_FULL=false
+    SPACESHIP_BATTERY_THRESHOLD=25
+    SPACESHIP_EXIT_CODE_SHOW=true
+    SPACESHIP_EXIT_CODE_SUFFIX=" (╯°□°）╯︵ ┻━┻ "
 
-SPACESHIP_NODE_SHOW=false
-SPACESHIP_RUBY_SHOW=false
-SPACESHIP_ELIXIR_SHOW=false
-SPACESHIP_XCODE_SHOW_LOCAL=false
-SPACESHIP_XCODE_SHOW_GLOBAL=false
-SPACESHIP_SWIFT_SHOW_LOCAL=false
-SPACESHIP_SWIFT_SHOW_GLOBAL=false
-SPACESHIP_GOLANG_SHOW=false
-SPACESHIP_PHP_SHOW=false
-SPACESHIP_RUST_SHOW=false
-SPACESHIP_HASKELL_SHOW=false
-SPACESHIP_JULIA_SHOW=false
-SPACESHIP_DOCKER_SHOW=false
-SPACESHIP_PYENV_SHOW=false
-SPACESHIP_DOTNET_SHOW=false
-SPACESHIP_EMBER_SHOW=false
-SPACESHIP_PACKAGE_SHOW=false
+    SPACESHIP_NODE_SHOW=false
+    SPACESHIP_RUBY_SHOW=false
+    SPACESHIP_ELIXIR_SHOW=false
+    SPACESHIP_XCODE_SHOW_LOCAL=false
+    SPACESHIP_XCODE_SHOW_GLOBAL=false
+    SPACESHIP_SWIFT_SHOW_LOCAL=false
+    SPACESHIP_SWIFT_SHOW_GLOBAL=false
+    SPACESHIP_GOLANG_SHOW=false
+    SPACESHIP_PHP_SHOW=false
+    SPACESHIP_RUST_SHOW=false
+    SPACESHIP_HASKELL_SHOW=false
+    SPACESHIP_JULIA_SHOW=false
+    SPACESHIP_DOCKER_SHOW=false
+    SPACESHIP_PYENV_SHOW=false
+    SPACESHIP_DOTNET_SHOW=false
+    SPACESHIP_EMBER_SHOW=false
+    SPACESHIP_PACKAGE_SHOW=false
 
-antigen bundle systemd
-antigen bundle colored-man-pages
-antigen bundle command-not-found
-antigen bundle zsh-users/zsh-completions
-antigen bundle ascii-soup/zsh-url-highlighter
-# antigen bundle RobSis/zsh-completion-generator
+    if [[ $ZSH_LIGHT != "true" ]]; then
+        antigen bundle systemd
+        antigen bundle colored-man-pages
+        antigen bundle command-not-found
+        antigen bundle zsh-users/zsh-completions
+        antigen bundle ascii-soup/zsh-url-highlighter
+        # antigen bundle RobSis/zsh-completion-generator
 
-antigen bundle zsh-users/zsh-syntax-highlighting
-set-zsh-highlighting-full
-export ZSH_HIGHLIGHT_MAXLENGTH=512
+        antigen bundle zsh-users/zsh-syntax-highlighting
+        set-zsh-highlighting-full
+        export ZSH_HIGHLIGHT_MAXLENGTH=512
 
-antigen bundle zsh-users/zsh-autosuggestions
-export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
-export ZSH_AUTOSUGGEST_USE_ASYNC=true
+        antigen bundle zsh-users/zsh-autosuggestions
+        export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+        export ZSH_AUTOSUGGEST_USE_ASYNC=true
+    fi
+else
+    PS1='$ '
+fi
+
+unalias sudo 2>/dev/null
+unalias make 2>/dev/null
+unalias cmake 2>/dev/null
+unalias gcc 2>/dev/null
+unalias g++ 2>/dev/null
+unalias c++ 2>/dev/null
+condition_for_tmux_mem_cpu_load=1
+if [[ \
+    $EUID -eq 0 && \
+    -f $(which sudo 2>/dev/null) && \
+    -f $(which make 2>/dev/null) && \
+    -f $(which cmake 2>/dev/null) && \
+    -f $(which gcc 2>/dev/null) && \
+    -f $(which g++ 2>/dev/null) && \
+    -f $(which c++ 2>/dev/null) \
+    ]]; then
+
+    condition_for_tmux_mem_cpu_load=0
+fi
 
 if [[ ${condition_for_tmux_mem_cpu_load} -eq 0 ]]; then
-    #antigen bundle thewtex/tmux-mem-cpu-load
-    antigen bundle compilenix/tmux-mem-cpu-load
+    if [[ $ZSH_MINIMAL != "true" ]]; then
+        #antigen bundle thewtex/tmux-mem-cpu-load
+        antigen bundle compilenix/tmux-mem-cpu-load
+    fi
 fi
 
 if which tmux &> /dev/null
@@ -570,16 +621,37 @@ function my-chpwd {
 }
 chpwd_functions=(${chpwd_functions[@]} "my-chpwd")
 
-export DOTNET_CLI_TELEMETRY_OPTOUT=1
-export FT2_SUBPIXEL_HINTING=1
+if [ ! -f "$HOME/.zshrc_include" ]; then
+cat << EOF | tee $HOME/.gitconfig_include.test >/dev/null
+# vim: sw=4 et
 
-if [ -f "$HOME/.zshrc_include" ]; then
-    source "$HOME/.zshrc_include"
-else
-    echo -e "#export EDITOR=nano" >"$HOME/.zshrc_include"
+alias vim='nvim'
+export EDITOR=nvim
+export LANG="en_US.UTF-8"
+export HISTSIZE=10000
+export HISTFILE="\$HOME/.history"
+export SAVEHIST=$HISTSIZE
+
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+if [ -z "\$SSH_AUTH_SOCK" ] ; then
+    eval \`ssh-agent -s\`
+fi
+EOF
 fi
 
-antigen apply
+# wget: Use UTF-8 as the default system encoding if it's supported
+if [[ -f $(which wget 2>/dev/null) && -f $(which grep 2>/dev/null) ]]; then
+    if wget --help | grep -q "local-encoding"; then
+        sed -i 's/\#local_encoding/local_encoding/g' ~/.wgetrc
+    fi
+fi
+
+source "$HOME/.zshrc_include"
+
+if [[ $ZSH_MINIMAL != "true" ]]; then
+    antigen apply
+fi
 
 bindkey '^[[1~' beginning-of-line
 bindkey '^[[4~' end-of-line
@@ -588,7 +660,10 @@ bindkey '^H' backward-kill-word # Ctrl+Backspacce
 
 autoload -U compinit && compinit -u
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=cyan" # http://zsh.sourceforge.net/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting
-spaceship_vi_mode_disable
+
+if [[ $ZSH_MINIMAL != "true" ]]; then
+    spaceship_vi_mode_disable
+fi
 
 if [ ! -f "$HOME/.gnupg/gpg-agent.env" ]; then
     mkdir -pv "$HOME/.gnupg"
@@ -611,5 +686,3 @@ echo "here is a random shell alias you might not known about: $(get-random-alias
 
 unset n
 unset condition_for_tmux_mem_cpu_load
-
-# vim: sw=4 et
