@@ -264,7 +264,7 @@ function fix-antigen_and_homesick_vim {
 }
 alias update-zshrc='pushd ~/.homesick/repos/server-dotfiles; git status; popd >/dev/null; echo "This will reset all changes you may made to files which are symlinks at your home directory, to check this your own: \"# cd ~/.homesick/repos/server-dotfiles && git status\"\nDo you want preced anyway?"; function ask_yn_y_callback { fix-antigen_and_homesick_vim; }; function ask_yn_n_callback { echo -n ""; }; ask_yn'
 alias update-code-insiders-rpm='wget "https://go.microsoft.com/fwlink/?LinkID=760866" -O /tmp/code-insiders.rpm && sudo yum install -y /tmp/code-insiders.rpm && rm /tmp/code-insiders.rpm'
-alias test-mail-sendmail='echo "Subject: test" | sendmail -v '
+alias test-mail-sendmail='echo -n "To: "; read mail_to_addr; echo -e "From: ${USER}@$(hostname -f)\nTo: ${mail_to_addr}\nSubject: test subject\n\ntest body" | sendmail -v "${mail_to_addr}"'
 alias test-mail-mutt='mutt -s "test" '
 function apache-configtest { sudo apache2ctl -t }
 function apache-reload { apache-configtest && { sudo systemctl reload apache2 || sudo systemctl status apache2 } }
