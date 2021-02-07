@@ -11,7 +11,6 @@ __Keep always an old terminal open, in case of failures!__
 curl https://git.compilenix.org/CompileNix/server-dotfiles/-/raw/master/install.sh | bash
 ```
 
-
 # Requirements
 - python 3.7+
 - git

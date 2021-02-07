@@ -389,6 +389,7 @@ cat << EOF | tee $HOME/.gitconfig_include >/dev/null
 
 [credential]
     helper = store
+
 EOF
 fi
 
@@ -622,7 +623,7 @@ function my-chpwd {
 chpwd_functions=(${chpwd_functions[@]} "my-chpwd")
 
 if [ ! -f "$HOME/.zshrc_include" ]; then
-cat << EOF | tee $HOME/.gitconfig_include.test >/dev/null
+cat << EOF | tee $HOME/.zshrc_include >/dev/null
 # vim: sw=4 et
 
 alias vim='nvim'
@@ -637,6 +638,7 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 if [ -z "\$SSH_AUTH_SOCK" ] ; then
     eval \`ssh-agent -s\`
 fi
+
 EOF
 fi
 
